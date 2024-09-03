@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car API</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js"
+      defer
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div class="container" x-data="carApp()">
+      <h1>Car Management</h1>
+      <form @submit.prevent="addCar">
+        <input
+          type="text"
+          x-model="newCar.reg_number"
+          placeholder="Registration Number"
+          required
+        />
+        <input
+          type="text"
+          x-model="newCar.color"
+          placeholder="Color"
+          required
+        />
+        <input type="text" x-model="newCar.make" placeholder="Make" required />
+        <input
+          type="text"
+          x-model="newCar.model"
+          placeholder="Model"
+          required
+        />
+        <button type="submit">Add Car</button>
+      </form>
+
+      <ul>
+        <li x-for="car in cars" :key="car.reg_number">
+          <span x-text="car.reg_number"></span> -
+          <span x-text="car.color"></span> - <span x-text="car.make"></span> -
+          <span x-text="car.model"></span>
+          <button @click="deleteCar(car.reg_number)">Delete</button>
+        </li>
+      </ul>
+
+      <button @click="fetchFewestOrangeCars">Get Town with Fewest Orange Cars</button>
+      <div x-show="fewestOrangeCarsTown" class="fewest-orange-cars">
+        <h2>Town with Fewest Orange Cars: <span x-text="fewestOrangeCarsTown"></span></h2>
+      </div>
+    </div>
+
+    <script>
+      function carApp() {
+        return {
+          newCar: { reg_number: "", color: "", make: "", model: "" },
+          cars: [],
+          fewestOrangeCarsTown: "",
+          fetchCars() {
+            axios.get("/api/cars").then((response) => {
+              this.cars = response.data;
+            });
+          },
+          addCar() {
+            axios.post("/api/cars", this.newCar).then((response) => {
+              this.cars.push(response.data);
+              this.newCar = { reg_number: "", color: "", make: "", model: "" };
+            });
+          },
+          deleteCar(reg_number) {
+            axios.delete(`/api/cars/${reg_number}`).then(() => {
+              this.cars = this.cars.filter(
+                (car) => car.reg_number !== reg_number
+              );
+            });
+          },
+          fetchFewestOrangeCars() {
+            axios.get("/api/cars/fewestOrangeCars").then((response) => {
+              this.fewestOrangeCarsTown = response.data.town;
+            });
+          },
+          init() {
+            this.fetchCars();
+          },
+        };
+      }
+
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("carApp", carApp);
+      });
+    </script>
+  </body>
+</html>
